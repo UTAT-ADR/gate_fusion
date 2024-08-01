@@ -2,7 +2,7 @@
 <package format="2">
   <name>gate_fusion</name>
   <version>1.0.0</version>
-  <description>VIO Drift corrector using drone racing gates.</description>
+  <description>VIO drift corrector using drone racing gates.</description>
 
   <maintainer email="i.lin@mail.utoronto.ca">Yifan Lin</maintainer>
 
