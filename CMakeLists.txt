@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   cv_bridge
   image_transport
+  flightgoggles
 )
 
 ## System dependencies
@@ -33,7 +34,7 @@ add_compile_options(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES gate_fusion
-  CATKIN_DEPENDS roscpp nav_msgs sensor_msgs cv_bridge image_transport
+  CATKIN_DEPENDS roscpp nav_msgs sensor_msgs cv_bridge image_transport flightgoggles
   DEPENDS EIGEN3 OpenCV CUDAToolkit
 )
 
@@ -59,6 +60,8 @@ list(APPEND thirdparty_libraries
 
 add_library(${PROJECT_NAME}
   src/ESKF.cpp
+  src/GateSimROS.cpp
+  src/Pipeline.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

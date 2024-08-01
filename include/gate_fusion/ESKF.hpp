@@ -3,11 +3,9 @@
 
 #include <Eigen/Core>
 
-namespace gate
-{
+namespace gate {
 
-class ESKF
-{
+class ESKF {
 public:
   ESKF(double acc_noise_density, 
        double acc_noise_density_multiplier,
