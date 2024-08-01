@@ -80,10 +80,11 @@ void ESKF::propagate(const double& t) {
   Eigen::Matrix<double, 6, 6> F_x_ = Eigen::Matrix<double, 6, 6>::Identity();
   F_x_.block<3, 3>(0, 3) = Eigen::Matrix3d::Identity() * total_dt;
 
-  Eigen::Matrix<double, 6, 3> F_i_ = Eigen::Matrix<double, 6, 3>::Zero();
-  F_i_.block<3, 3>(3, 0) = Eigen::Matrix3d::Identity();
+  Eigen::Matrix<double, 6, 3> F_i_;
+  F_i_.block<3, 3>(0, 0) = 0.5 * total_dt * total_dt * Eigen::Matrix3d::Identity();
+  F_i_.block<3, 3>(3, 0) = total_dt * Eigen::Matrix3d::Identity();
 
-  Eigen::Matrix<double, 3, 3> Q_i_ = a_w_ * a_w_ * total_dt * Eigen::Matrix3d::Identity();
+  Eigen::Matrix<double, 3, 3> Q_i_ = a_w_ * a_w_ / total_dt * Eigen::Matrix3d::Identity();
 
   P_ = F_x_ * P_ * F_x_.transpose() + F_i_ * Q_i_ * F_i_.transpose();
 
