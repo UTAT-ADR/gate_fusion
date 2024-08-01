@@ -11,6 +11,8 @@ class ESKF
 public:
   ESKF(double acc_noise_density, 
        double acc_noise_density_multiplier,
+       Eigen::Vector3d p0,
+       Eigen::Vector3d v0,
        double t0);
 
   ~ESKF() = default;

@@ -4,10 +4,12 @@ using namespace gate;
 
 ESKF::ESKF(double acc_noise_density, 
            double acc_noise_density_multiplier,
+           Eigen::Vector3d p0,
+           Eigen::Vector3d v0,
            double t0) {
   // Initialize state
-  p_ = Eigen::Vector3d::Zero();
-  v_ = Eigen::Vector3d::Zero();
+  p_ = p0;
+  v_ = v0;
   t_ = t0;
 
   // Initialize covariance
@@ -16,7 +18,6 @@ ESKF::ESKF(double acc_noise_density,
   // Initialize noise
   // [m * sqrt(s) / (s^2)]
   a_w_ = acc_noise_density * acc_noise_density_multiplier;
-
 }
 
 void ESKF::feed_prediction(const Eigen::Vector3d& delta_p,
@@ -87,7 +88,6 @@ void ESKF::propagate(const double& t) {
   Eigen::Matrix<double, 3, 3> Q_i_ = a_w_ * a_w_ / total_dt * Eigen::Matrix3d::Identity();
 
   P_ = F_x_ * P_ * F_x_.transpose() + F_i_ * Q_i_ * F_i_.transpose();
-
 }
 
 void ESKF::update(const std::vector<Eigen::Vector3d>& p_b_i_vecs,
