@@ -2,7 +2,7 @@
 
 
 acc_noise_density_multiplier: 1.0
-gate_size: 1.524
+gate_size: 1.8288
 gate_map_path: /home/noidvan/workspaces/fg_ws/src/agihawk/racetracks/summer_5wp.yaml
 
 # imu and camera spacial-temporal
