@@ -1,4 +1,5 @@
 #include "gate_fusion/ESKF.hpp"
+#include <iostream>
 
 using namespace gate;
 
@@ -115,6 +116,7 @@ void ESKF::update(const std::vector<Eigen::Vector3d>& p_b_i_vecs,
 
   p_ = p_ + delta_x_.segment<3>(0);
   v_ = v_ + delta_x_.segment<3>(3);
+  std::cout << "ESKF Update! Covariance:\n" << P_ << std::endl;
 }
 
 Eigen::Matrix<double, 6, 1> ESKF::fast_propagate(const double& t) {

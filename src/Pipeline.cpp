@@ -1,4 +1,5 @@
 #include "gate_fusion/Pipeline.hpp"
+#include <iostream>
 
 using namespace gate;
 
@@ -30,7 +31,7 @@ Pipeline::Pipeline(const std::string& param_file_path) {
   K_.at<double>(1, 2) = K_vec.at<double>(3, 0);
   K_.at<double>(2, 2) = 1.0;
 
-  Eigen::Matrix4d T_b_c_ = Eigen::Matrix4d::Identity();
+  T_b_c_ = Eigen::Matrix4d::Identity();
   for (int i = 0; i < 4; ++i) {
     for (int j = 0; j < 4; ++j) {
       T_b_c_(i, j) = cam_params["cam0"]["T_imu_cam"][i][j].as<double>();
@@ -50,6 +51,10 @@ Pipeline::Pipeline(const std::string& param_file_path) {
 
   acc_noise_density_ = imu_params["imu0"]["accelerometer_noise_density"].as<double>();
 
+  p_b_i_ = Eigen::Vector3d::Zero();
+  v_b_i_ = Eigen::Vector3d::Zero();
+  R_i_b_ = Eigen::Matrix3d::Identity();
+
   // std::cout << "acc_noise_density_multiplier: " << acc_noise_density_multiplier_ << std::endl;
   // std::cout << "acc_noise_density:" << acc_noise_density_ << std::endl;
   // std::cout << "gate_size:" << gate_size << std::endl;
@@ -63,16 +68,22 @@ void Pipeline::feed_odom(const Eigen::Vector3d& p_b_i,
                          const Eigen::Quaterniond& q_i_b,
                          const double& t) {
   if (!initialized_) {
-    ESKF_ = new ESKF(acc_noise_density_, acc_noise_density_multiplier_, p_b_i, v_b_i, t);
+    yaw_offset_ = fsc::QuaternionToRotationMatrix(q_i_b).transpose();
+    Eigen::Vector3d _p_b_i = yaw_offset_ * p_b_i;
+    Eigen::Vector3d _v_b_i = yaw_offset_ * v_b_i;
+    ESKF_ = new ESKF(acc_noise_density_, acc_noise_density_multiplier_, _p_b_i, _v_b_i, t);
     initialized_ = true;
     return;
   }
 
-  ESKF_->feed_prediction(p_b_i - p_b_i_, v_b_i - v_b_i_, t);
+  Eigen::Vector3d _p_b_i = yaw_offset_ * p_b_i;
+  Eigen::Vector3d _v_b_i = yaw_offset_ * v_b_i;
 
-  p_b_i_ = p_b_i;
-  v_b_i_ = v_b_i;
-  R_i_b_ = fsc::QuaternionToRotationMatrix(q_i_b);
+  ESKF_->feed_prediction(_p_b_i - p_b_i_, _v_b_i - v_b_i_, t);
+
+  p_b_i_ = _p_b_i;
+  v_b_i_ = _v_b_i;
+  R_i_b_ = yaw_offset_ * fsc::QuaternionToRotationMatrix(q_i_b);
 }
 
 void Pipeline::feed_corners(const std::vector<std::vector<cv::Point2d>>& corners,
@@ -148,11 +159,15 @@ bool Pipeline::matchGates(const std::vector<Eigen::Matrix<double, 4, 4>>& T_c_gs
   Eigen::Matrix<double, 4, 4> T_i_b_pred = Eigen::Matrix<double, 4, 4>::Identity();
   T_i_b_pred.block<3, 3>(0, 0) = R_i_b_;
   T_i_b_pred.block<3, 1>(0, 3) = p_b_i;
+  // std::cout << "T_i_b_pred:\n" << T_i_b_pred << std::endl;
 
   Eigen::Matrix3d R_single = 0.0001 * Eigen::Matrix3d::Identity();
 
   for (auto& T_c_g : T_c_gs) {
-    Eigen::Matrix<double, 4, 4> T_i_g_pred = T_i_b_pred * T_b_c_ * T_c_g;
+    // std::cout << "T_c_g:\n" << T_c_g.inverse() << std::endl;
+    // std::cout << "T_b_g_:\n" << T_b_c_ * T_c_g.inverse() * T_b_c_.inverse() << std::endl;
+    Eigen::Matrix<double, 4, 4> T_i_g_pred = T_i_b_pred * T_b_c_ * T_c_g * T_b_c_.inverse();
+    std::cout << "T_i_g_pred:\n" << T_i_g_pred << std::endl;
 
     for (auto& gate : gate_map_) {
       if ((T_i_g_pred.block<3, 1>(0, 3) - gate).norm() < 1.0) {

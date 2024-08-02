@@ -50,6 +50,7 @@ private:
   std::vector<cv::Point3d> obj_pts_;
 
   bool initialized_ = false;
+  Eigen::Matrix3d yaw_offset_;
   Eigen::Vector3d p_b_i_;
   Eigen::Vector3d v_b_i_;
   Eigen::Matrix3d R_i_b_;
