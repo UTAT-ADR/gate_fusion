@@ -1,7 +1,7 @@
 #ifndef ESKF_H_
 #define ESKF_H_
 
-#include <Eigen/Core>
+#include <Eigen/Eigen>
 
 namespace gate {
 
@@ -23,7 +23,7 @@ public:
                         const std::vector<Eigen::Matrix3d>& p_b_i_covs,
                         const double& t);
   
-  Eigen::Matrix<double, 6, 1> get_state(double& t) { return fast_propagate(t); };
+  Eigen::Matrix<double, 6, 1> get_state(const double& t) { return fast_propagate(t); };
 
 private:
   void propagate(const double& t);

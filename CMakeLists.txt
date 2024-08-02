@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV 4 REQUIRED)
 find_package(CUDAToolkit REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 ## Set CUDA architecture
 set(CMAKE_CUDA_ARCHITECTURES native)
@@ -35,7 +36,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES gate_fusion
   CATKIN_DEPENDS roscpp nav_msgs sensor_msgs cv_bridge image_transport flightgoggles
-  DEPENDS EIGEN3 OpenCV CUDAToolkit
+  DEPENDS eigen libopencv-dev nvidia-cuda yaml-cpp
 )
 
 ###########
@@ -48,12 +49,15 @@ include_directories(
   ${EIGEN3_INCLUDE_DIR}
   ${CUDAToolkit_INCLUDE_DIRS}
   ${TensorRT_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
+  ${yaml-cpp_INCLUDE_DIRS}
 )
 
 list(APPEND thirdparty_libraries
   ${OpenCV_LIBRARIES}
   ${catkin_LIBRARIES}
   ${CUDAToolkit_LIBRARIES}
+  yaml-cpp
   nvinfer
   nvinfer_plugin
 )
@@ -68,6 +72,11 @@ target_link_libraries(${PROJECT_NAME}
   ${thirdparty_libraries}
 )
 
-# add_executable(${PROJECT_NAME}_node src/gate_fusion_node.cpp)
+add_executable(gate_sim_node src/gate_sim_node.cpp)
+
+target_link_libraries(gate_sim_node
+  ${PROJECT_NAME}
+  ${thirdparty_libraries}
+)
 
 

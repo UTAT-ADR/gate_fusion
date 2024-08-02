@@ -2,7 +2,7 @@
 #define GATE_SIM_ROS_H_
 
 #include <opencv2/opencv.hpp>
-#include <Eigen/Core>
+#include <Eigen/Eigen>
 #include <Eigen/Geometry>
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
@@ -36,7 +36,7 @@ private:
 
   Pipeline* Pipeline_;
 
-}
+};
 } // namespace gate
 
 

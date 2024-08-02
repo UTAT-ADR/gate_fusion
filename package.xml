@@ -19,5 +19,6 @@
   <depend>eigen</depend>
   <depend>libopencv-dev</depend>
   <depend>nvidia-cuda</depend>
+  <depend>yaml-cpp</depend>
   
 </package>

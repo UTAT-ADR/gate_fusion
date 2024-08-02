@@ -1,0 +1,8 @@
+<launch>
+  <node name="gate_sim_node" pkg="gate_fusion" type="gate_sim_node" output="screen">
+  <!-- <node name="gate_sim_node" pkg="gate_fusion" type="gate_sim_node" output="screen" launch-prefix="gdb -ex run &#45;&#45;args"> -->
+    <param name="param_path" value="/home/noidvan/workspaces/fg_ws/src/gate_fusion/config/flightgoggles/config.yaml" />
+    <param name="odom_topic" value="/uav/odometry" />
+    <param name="gate_topic" value="/uav/sensors/imu" />
+  </node>
+</launch>
