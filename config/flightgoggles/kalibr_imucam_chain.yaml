@@ -9,6 +9,6 @@ cam0:
   camera_model: pinhole
   distortion_coeffs: [0, 0, 0, 0]
   distortion_model: radtan
-  intrinsics: [514.13330078125, 514.13330078125, 360, 360] #fu, fv, cu, cv
+  intrinsics: [207.84609985351562, 207.84609985351562, 360.0, 360.0] #fu, fv, cu, cv
   resolution: [720, 720]
   rostopic: /uav/camera/left/image_rect_color

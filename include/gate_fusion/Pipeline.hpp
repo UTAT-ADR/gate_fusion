@@ -51,6 +51,7 @@ private:
 
   bool initialized_ = false;
   Eigen::Matrix3d yaw_offset_;
+  Eigen::Vector3d start_pos_offset_;
   Eigen::Vector3d p_b_i_;
   Eigen::Vector3d v_b_i_;
   Eigen::Matrix3d R_i_b_;

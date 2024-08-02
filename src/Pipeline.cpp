@@ -14,28 +14,36 @@ Pipeline::Pipeline(const std::string& param_file_path) {
   YAML::Node imu_params = YAML::LoadFile(imu_params_path);
   YAML::Node cam_params = YAML::LoadFile(cam_params_path);
 
-  D_ = cv::Mat(cv::Size(1, 4), CV_64FC1);
+  Eigen::Matrix<double, 1, 4> D;
   for (int i = 0; i < 4; ++i) {
-    D_.at<double>(i, 0) = cam_params["cam0"]["distortion_coeffs"][i].as<double>();
+    D(0, i) = cam_params["cam0"]["distortion_coeffs"][i].as<double>();
   }
 
-  cv::Mat K_vec = cv::Mat::zeros(cv::Size(4, 1), CV_64FC1);
-  for (int i = 0; i < 4; ++i) {
-    K_vec.at<double>(i, 0) = cam_params["cam0"]["intrinsics"][i].as<double>();
+  cv::eigen2cv(D, D_);
+
+  Eigen::Matrix<double, 1, 4> K_vec;
+  for (int i = 0; i < 4; i++) {
+    K_vec(0, i) = cam_params["cam0"]["intrinsics"][i].as<double>();
   }
 
-  K_ = cv::Mat::zeros(cv::Size(3, 3), CV_64FC1);
-  K_.at<double>(0, 0) = K_vec.at<double>(0, 0);
-  K_.at<double>(1, 1) = K_vec.at<double>(1, 0);
-  K_.at<double>(0, 2) = K_vec.at<double>(2, 0);
-  K_.at<double>(1, 2) = K_vec.at<double>(3, 0);
-  K_.at<double>(2, 2) = 1.0;
+  Eigen::Matrix3d K = Eigen::Matrix3d::Zero();
+  K(0, 0) = K_vec(0, 0);
+  K(1, 1) = K_vec(0, 1);
+  K(0, 2) = K_vec(0, 2);
+  K(1, 2) = K_vec(0, 3);
+  K(2, 2) = 1.0;
+
+  cv::eigen2cv(K, K_);
 
   T_b_c_ = Eigen::Matrix4d::Identity();
   for (int i = 0; i < 4; ++i) {
     for (int j = 0; j < 4; ++j) {
       T_b_c_(i, j) = cam_params["cam0"]["T_imu_cam"][i][j].as<double>();
     }
+  }
+
+  for (int i = 0; i < 3; i++) {
+    start_pos_offset_(i, 0) = params["start_pos_offset"][i].as<double>();
   }
 
   double gate_size = params["gate_size"].as<double>();
@@ -51,16 +59,18 @@ Pipeline::Pipeline(const std::string& param_file_path) {
 
   acc_noise_density_ = imu_params["imu0"]["accelerometer_noise_density"].as<double>();
 
-  p_b_i_ = Eigen::Vector3d::Zero();
-  v_b_i_ = Eigen::Vector3d::Zero();
-  R_i_b_ = Eigen::Matrix3d::Identity();
+  // p_b_i_ = Eigen::Vector3d::Zero();
+  // v_b_i_ = Eigen::Vector3d::Zero();
+  // R_i_b_ = Eigen::Matrix3d::Identity();
 
-  // std::cout << "acc_noise_density_multiplier: " << acc_noise_density_multiplier_ << std::endl;
-  // std::cout << "acc_noise_density:" << acc_noise_density_ << std::endl;
-  // std::cout << "gate_size:" << gate_size << std::endl;
-  // std::cout << "D:\n" << D_ << std::endl;
-  // std::cout << "K:\n" << K_ << std::endl;
-  // std::cout << "T_b_c:\n" << T_b_c_ << std::endl;
+  std::cout << "acc_noise_density_multiplier: " << acc_noise_density_multiplier_ << std::endl;
+  std::cout << "acc_noise_density:" << acc_noise_density_ << std::endl;
+  std::cout << "gate_size:" << gate_size << std::endl;
+  std::cout << "D:\n" << D_ << std::endl;
+  std::cout << "K_vec:\n" << K_vec << std::endl;
+  std::cout << "K:\n" << K_ << std::endl;
+  std::cout << "T_b_c:\n" << T_b_c_ << std::endl;
+  std::cout << "start_pos_offset:\n" << start_pos_offset_ << std::endl;
 }
 
 void Pipeline::feed_odom(const Eigen::Vector3d& p_b_i,
@@ -69,14 +79,17 @@ void Pipeline::feed_odom(const Eigen::Vector3d& p_b_i,
                          const double& t) {
   if (!initialized_) {
     yaw_offset_ = fsc::QuaternionToRotationMatrix(q_i_b).transpose();
-    Eigen::Vector3d _p_b_i = yaw_offset_ * p_b_i;
+    Eigen::Vector3d _p_b_i = yaw_offset_ * p_b_i + start_pos_offset_;
     Eigen::Vector3d _v_b_i = yaw_offset_ * v_b_i;
     ESKF_ = new ESKF(acc_noise_density_, acc_noise_density_multiplier_, _p_b_i, _v_b_i, t);
+    p_b_i_ = _p_b_i;
+    v_b_i_ = _v_b_i;
+    R_i_b_ = yaw_offset_ * fsc::QuaternionToRotationMatrix(q_i_b);
     initialized_ = true;
     return;
   }
 
-  Eigen::Vector3d _p_b_i = yaw_offset_ * p_b_i;
+  Eigen::Vector3d _p_b_i = yaw_offset_ * p_b_i + start_pos_offset_;
   Eigen::Vector3d _v_b_i = yaw_offset_ * v_b_i;
 
   ESKF_->feed_prediction(_p_b_i - p_b_i_, _v_b_i - v_b_i_, t);
@@ -113,6 +126,9 @@ bool Pipeline::solveIPPE(const std::vector<std::vector<cv::Point2d>>& gates,
   for (auto& gate : gates) {
     if (gate.size() == 4) {
       std::vector<cv::Point2d> corners_sorted = Pipeline::sort_corners(gate);
+      // for (auto& corner : corners_sorted) {
+      //   std::cout << corner << std::endl;
+      // }
       std::vector<cv::Mat> t_g_c_vec, r_c_g_vec;
       cv::Mat rpj_err = cv::Mat(2,1, CV_64FC1);
       cv::solvePnPGeneric(obj_pts_,
@@ -130,17 +146,19 @@ bool Pipeline::solveIPPE(const std::vector<std::vector<cv::Point2d>>& gates,
       if (t_g_c_vec.empty()) {
         continue;
       }
-
+      cv::Mat R_c_g;
+      cv::Rodrigues(r_c_g_vec[0], R_c_g);
       Eigen::Vector3d t_g_c;
-      Eigen::Vector3d r_c_g;
+      Eigen::Matrix3d R_c_g_eigen;
       cv::cv2eigen(t_g_c_vec[0], t_g_c);
-      cv::cv2eigen(r_c_g_vec[0], r_c_g);
+      cv::cv2eigen(R_c_g, R_c_g_eigen);
 
       Eigen::Matrix<double, 4, 4> T_c_g = Eigen::Matrix<double, 4, 4>::Identity();
-      T_c_g.block<3, 1>(0, 3) = t_g_c;
-      T_c_g.block<3, 3>(0, 0) = fsc::AngleAxisToRotationMatrix(r_c_g);
+      T_c_g.block<3, 1>(0, 3) = - t_g_c;
+      T_c_g.block<3, 3>(0, 0) = R_c_g_eigen;
+      // std::cout << T_c_g << std::endl;
 
-      T_c_gs.push_back(T_c_g);
+      T_c_gs.push_back(T_c_g.inverse());
     }
   }
 
@@ -161,13 +179,13 @@ bool Pipeline::matchGates(const std::vector<Eigen::Matrix<double, 4, 4>>& T_c_gs
   T_i_b_pred.block<3, 1>(0, 3) = p_b_i;
   // std::cout << "T_i_b_pred:\n" << T_i_b_pred << std::endl;
 
-  Eigen::Matrix3d R_single = 0.0001 * Eigen::Matrix3d::Identity();
+  Eigen::Matrix3d R_single = 0.00000001 * Eigen::Matrix3d::Identity();
 
   for (auto& T_c_g : T_c_gs) {
     // std::cout << "T_c_g:\n" << T_c_g.inverse() << std::endl;
-    // std::cout << "T_b_g_:\n" << T_b_c_ * T_c_g.inverse() * T_b_c_.inverse() << std::endl;
+    // std::cout << "T_b_g_:\n" << T_b_c_ * T_c_g * T_b_c_.inverse() << std::endl;
     Eigen::Matrix<double, 4, 4> T_i_g_pred = T_i_b_pred * T_b_c_ * T_c_g * T_b_c_.inverse();
-    std::cout << "T_i_g_pred:\n" << T_i_g_pred << std::endl;
+    // std::cout << "T_i_g_pred:\n" << T_i_g_pred << std::endl;
 
     for (auto& gate : gate_map_) {
       if ((T_i_g_pred.block<3, 1>(0, 3) - gate).norm() < 1.0) {

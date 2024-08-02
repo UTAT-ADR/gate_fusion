@@ -3,9 +3,11 @@
 
 acc_noise_density_multiplier: 1.0
 gate_size: 1.8288
-gate_map_path: /home/noidvan/workspaces/fg_ws/src/agihawk/racetracks/summer_5wp.yaml
+gate_map_path: "/home/fsc-jupiter/workspaces/fg_ws/src/agihawk/racetracks/summer_5wp.yaml"
+
+start_pos_offset: [-3.5, 3.5, 1.0]
 
 # imu and camera spacial-temporal
 # imu config should also have the correct noise values
-config_path_imu: "/home/noidvan/workspaces/fg_ws/src/gate_fusion/config/flightgoggles/kalibr_imu_chain.yaml"
-config_path_imucam: "/home/noidvan/workspaces/fg_ws/src/gate_fusion/config/flightgoggles/kalibr_imucam_chain.yaml"
+config_path_imu: "/home/fsc-jupiter/workspaces/fg_ws/src/gate_fusion/config/flightgoggles/kalibr_imu_chain.yaml"
+config_path_imucam: "/home/fsc-jupiter/workspaces/fg_ws/src/gate_fusion/config/flightgoggles/kalibr_imucam_chain.yaml"
