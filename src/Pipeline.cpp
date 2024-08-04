@@ -67,7 +67,6 @@ Pipeline::Pipeline(const std::string& param_file_path) {
   std::cout << "acc_noise_density:" << acc_noise_density_ << std::endl;
   std::cout << "gate_size:" << gate_size << std::endl;
   std::cout << "D:\n" << D_ << std::endl;
-  std::cout << "K_vec:\n" << K_vec << std::endl;
   std::cout << "K:\n" << K_ << std::endl;
   std::cout << "T_b_c:\n" << T_b_c_ << std::endl;
   std::cout << "start_pos_offset:\n" << start_pos_offset_ << std::endl;
@@ -78,13 +77,13 @@ void Pipeline::feed_odom(const Eigen::Vector3d& p_b_i,
                          const Eigen::Quaterniond& q_i_b,
                          const double& t) {
   if (!initialized_) {
-    yaw_offset_ = fsc::QuaternionToRotationMatrix(q_i_b).transpose();
+    yaw_offset_ = q_i_b.toRotationMatrix().transpose();
     Eigen::Vector3d _p_b_i = yaw_offset_ * p_b_i + start_pos_offset_;
     Eigen::Vector3d _v_b_i = yaw_offset_ * v_b_i;
     ESKF_ = new ESKF(acc_noise_density_, acc_noise_density_multiplier_, _p_b_i, _v_b_i, t);
     p_b_i_ = _p_b_i;
     v_b_i_ = _v_b_i;
-    R_i_b_ = yaw_offset_ * fsc::QuaternionToRotationMatrix(q_i_b);
+    R_i_b_ = yaw_offset_ * q_i_b.toRotationMatrix();
     initialized_ = true;
     return;
   }
@@ -96,11 +95,13 @@ void Pipeline::feed_odom(const Eigen::Vector3d& p_b_i,
 
   p_b_i_ = _p_b_i;
   v_b_i_ = _v_b_i;
-  R_i_b_ = yaw_offset_ * fsc::QuaternionToRotationMatrix(q_i_b);
+  R_i_b_ = yaw_offset_ * q_i_b.toRotationMatrix();
 }
 
 void Pipeline::feed_corners(const std::vector<std::vector<cv::Point2d>>& corners,
-                            const double& t) {
+                            const double& t,
+                            std::vector<Eigen::Vector3d>& p_g_i_vec,
+                            std::vector<Eigen::Quaterniond>& q_i_g_vec) {
   if (!initialized_) {
     return;
   }
@@ -114,7 +115,7 @@ void Pipeline::feed_corners(const std::vector<std::vector<cv::Point2d>>& corners
 
   std::vector<Eigen::Vector3d> p_b_i_vec;
   std::vector<Eigen::Matrix3d> R_vec;
-  if (!Pipeline::matchGates(T_c_gs, p_b_i, p_b_i_vec, R_vec)) {
+  if (!Pipeline::matchGates(T_c_gs, p_b_i, p_b_i_vec, R_vec, p_g_i_vec, q_i_g_vec)) {
     return;
   }
 
@@ -154,11 +155,12 @@ bool Pipeline::solveIPPE(const std::vector<std::vector<cv::Point2d>>& gates,
       cv::cv2eigen(R_c_g, R_c_g_eigen);
 
       Eigen::Matrix<double, 4, 4> T_c_g = Eigen::Matrix<double, 4, 4>::Identity();
-      T_c_g.block<3, 1>(0, 3) = - t_g_c;
-      T_c_g.block<3, 3>(0, 0) = R_c_g_eigen;
-      // std::cout << T_c_g << std::endl;
-
-      T_c_gs.push_back(T_c_g.inverse());
+      T_c_g.block<3, 1>(0, 3) = t_g_c;
+      T_c_g.block<3, 3>(0, 0) = R_c_g_eigen.transpose();
+      // std::cout << "t_g_c:\n" << t_g_c << std::endl;
+      // std::cout << "R_c_g:\n" << drolib::rad2deg(drolib::rotationMatrixToEulerAnglesRPY(R_c_g_eigen)) << std::endl;
+      // std::cout << "rpj_err:\n" << rpj_err << std::endl;
+      T_c_gs.push_back(T_c_g);
     }
   }
 
@@ -172,24 +174,48 @@ bool Pipeline::solveIPPE(const std::vector<std::vector<cv::Point2d>>& gates,
 bool Pipeline::matchGates(const std::vector<Eigen::Matrix<double, 4, 4>>& T_c_gs,
                           const Eigen::Vector3d& p_b_i,
                           std::vector<Eigen::Vector3d>& p_b_i_vec,
-                          std::vector<Eigen::Matrix3d>& R_vec) {
+                          std::vector<Eigen::Matrix3d>& R_vec,
+                          std::vector<Eigen::Vector3d>& p_g_i_vec,
+                          std::vector<Eigen::Quaterniond>& q_i_g_vec) {
 
   Eigen::Matrix<double, 4, 4> T_i_b_pred = Eigen::Matrix<double, 4, 4>::Identity();
   T_i_b_pred.block<3, 3>(0, 0) = R_i_b_;
   T_i_b_pred.block<3, 1>(0, 3) = p_b_i;
-  // std::cout << "T_i_b_pred:\n" << T_i_b_pred << std::endl;
+  
+  Eigen::Vector3d p_c_b = T_b_c_.block<3, 1>(0, 3);
+  Eigen::Matrix3d R_b_c = T_b_c_.block<3, 3>(0, 0); 
 
-  Eigen::Matrix3d R_single = 0.00000001 * Eigen::Matrix3d::Identity();
+  Eigen::Matrix3d R_single = 0.01 * Eigen::Matrix3d::Identity();
 
   for (auto& T_c_g : T_c_gs) {
+    // Eigen::Vector3d t_g_b = R_b_c * T_c_g.block<3, 1>(0, 3) + t_c_b;
+    // Eigen::Matrix3d R_b_g = R_b_c * T_c_g.block<3, 3>(0, 0) * R_b_c.transpose();
+    // Eigen::Matrix<double, 4, 4> T_b_g = Eigen::Matrix<double, 4, 4>::Identity();
+    // T_b_g.block<3, 3>(0, 0) = R_b_g;
+    // T_b_g.block<3, 1>(0, 3) = t_g_b;
+
+    Eigen::Vector3d p_g_i = R_i_b_ * R_b_c * T_c_g.block<3, 1>(0, 3) + R_i_b_ * p_c_b + p_b_i;
+    Eigen::Quaterniond q_i_g(R_i_b_.transpose() * R_b_c * T_c_g.block<3, 3>(0, 0) * R_b_c.transpose());
+    // std::cout << "R_i_g:\n" << drolib::rad2deg(drolib::rotationMatrixToEulerAnglesRPY(R_i_b_.transpose() * R_b_c * T_c_g.block<3, 3>(0, 0) * R_b_c.transpose())) << std::endl;
+    
+
+    p_g_i_vec.push_back(p_g_i);
+    q_i_g_vec.push_back(q_i_g.inverse());
+
     // std::cout << "T_c_g:\n" << T_c_g.inverse() << std::endl;
-    // std::cout << "T_b_g_:\n" << T_b_c_ * T_c_g * T_b_c_.inverse() << std::endl;
-    Eigen::Matrix<double, 4, 4> T_i_g_pred = T_i_b_pred * T_b_c_ * T_c_g * T_b_c_.inverse();
-    // std::cout << "T_i_g_pred:\n" << T_i_g_pred << std::endl;
+    // Eigen::Matrix<double, 4, 4> T_i_g_pred = T_i_b_pred * T_b_g * T_i_b_pred.inverse();
+    // std::cout << "t_b_i:\n" << p_b_i << std::endl;
+    // std::cout << "R_i_b:\n" << R_i_b_ << std::endl;
+    // std::cout << "t_g_c:\n" << T_c_g.block<3, 1>(0, 3) << std::endl;
+    // std::cout << "R_c_g:\n" << T_c_g.block<3, 3>(0, 0) << std::endl;
+    // std::cout << "t_c_b:\n" << t_c_b << std::endl;
+    // std::cout << "R_b_c:\n" << R_b_c << std::endl;
+    // std::cout << "t_g_i:\n" << t_g_i << std::endl;
+    // std::cout << "R_i_g:\n" << drolib::rad2deg(drolib::rotationMatrixToEulerAnglesRPY(R_i_g)) << std::endl;
 
     for (auto& gate : gate_map_) {
-      if ((T_i_g_pred.block<3, 1>(0, 3) - gate).norm() < 1.0) {
-        Eigen::Vector3d p_b_i = (gate - T_i_g_pred.block<3, 1>(0, 3)) + T_i_b_pred.block<3, 1>(0, 3);
+      if ((p_g_i - gate).norm() < 1.0) {
+        Eigen::Vector3d p_b_i = (gate - p_g_i) + T_i_b_pred.block<3, 1>(0, 3);
         p_b_i_vec.push_back(p_b_i);
         R_vec.push_back(R_single);
         break;

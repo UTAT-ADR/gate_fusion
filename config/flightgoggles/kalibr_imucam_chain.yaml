@@ -3,8 +3,8 @@
 cam0:
   T_imu_cam: #rotation from camera to IMU R_CtoI, position of camera in IMU p_CinI
     - [0, 0, 1, 0]
-    - [1, 0, 0, 0]
-    - [0, 1, 0, 0]
+    - [-1, 0, 0, 0]
+    - [0, -1, 0, 0]
     - [0, 0, 0, 1]
   camera_model: pinhole
   distortion_coeffs: [0, 0, 0, 0]

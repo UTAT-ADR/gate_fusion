@@ -15,6 +15,9 @@
   <depend>cv_bridge</depend>
   <depend>image_transport</depend>
   <depend>flightgoggles</depend>
+  <depend>drolib</depend>
+  <depend>jsk_recognition_msgs</depend>
+  <depend>tf</depend>
 
   <depend>eigen</depend>
   <depend>libopencv-dev</depend>

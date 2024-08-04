@@ -32,18 +32,21 @@ void ESKF::feed_prediction(const Eigen::Vector3d& delta_p,
 void ESKF::feed_measurement(const std::vector<Eigen::Vector3d>& p_b_i_vecs,
                             const std::vector<Eigen::Matrix3d>& p_b_i_covs,
                             const double& t) {
-  ESKF::propagate(t);
+  if (!ESKF::propagate(t)) {
+    return;
+  }
 
   ESKF::update(p_b_i_vecs, p_b_i_covs);
 
   ESKF::remove_old_predictions(t);
 }
 
-void ESKF::propagate(const double& t) {
-  if (t < t_) {
-    throw std::runtime_error("Cannot propagate backwards in time!");
-  } else if (t_vec_.size() < 2) {
-    throw std::runtime_error("Cannot propagate without atleast 2 predictions!");
+bool ESKF::propagate(const double& t) {
+  // if (t < t_) {
+  //   throw std::runtime_error("Cannot propagate backwards in time!");
+  // } else 
+  if (t_vec_.size() < 2) {
+    return false;
   }
 
   double total_dt = 0.0;
@@ -60,24 +63,25 @@ void ESKF::propagate(const double& t) {
       t_ = t_vec_.at(i);
 
       total_dt += dt;
-    } else {
-      double interval_dt = t_vec_.at(i) - t_vec_.at(i - 1);
-      double dt = t - t_;
+    } 
+    // else {
+    //   double interval_dt = t_vec_.at(i) - t_vec_.at(i - 1);
+    //   double dt = t - t_;
 
-      p_ = p_ + ((delta_p_vecs_.at(i) - delta_p_vecs_.at(i - 1)) / interval_dt) * dt;
-      v_ = v_ + ((delta_v_vecs_.at(i) - delta_v_vecs_.at(i - 1)) / interval_dt) * dt;
+    //   p_ = p_ + ((delta_p_vecs_.at(i) - delta_p_vecs_.at(i - 1)) / interval_dt) * dt;
+    //   v_ = v_ + ((delta_v_vecs_.at(i) - delta_v_vecs_.at(i - 1)) / interval_dt) * dt;
 
-      t_ = t;
+    //   t_ = t;
 
-      total_dt += dt;
+    //   total_dt += dt;
 
-      break;
-    }
+    //   break;
+    // }
   }
 
-  if (t_ != t) {
-    throw std::runtime_error("Not enough prediction to propagate to desired time!");
-  }
+  // if (t_ != t) {
+  //   throw std::runtime_error("Not enough prediction to propagate to desired time!");
+  // }
 
   Eigen::Matrix<double, 6, 6> F_ = Eigen::Matrix<double, 6, 6>::Identity();
   F_.block<3, 3>(0, 3) = Eigen::Matrix3d::Identity() * total_dt;
@@ -87,6 +91,8 @@ void ESKF::propagate(const double& t) {
   Q_i_.block<3, 3>(3, 3) = a_w_ * a_w_ * Eigen::Matrix3d::Identity();
 
   P_ = F_ * P_ * F_.transpose() + F_ * Q_i_ * F_.transpose();
+
+  return true;
 }
 
 void ESKF::update(const std::vector<Eigen::Vector3d>& p_b_i_vecs,

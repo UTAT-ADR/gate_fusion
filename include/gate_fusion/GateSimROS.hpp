@@ -6,7 +6,10 @@
 #include <Eigen/Geometry>
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
+#include <jsk_recognition_msgs/BoundingBoxArray.h>
 #include <flightgoggles/IRMarkerArray.h>
+#include <tf/transform_broadcaster.h>
+#include <yaml-cpp/yaml.h>
 
 #include "gate_fusion/Pipeline.hpp"
 
@@ -29,12 +32,18 @@ private:
   ros::Subscriber odom_sub_;
   ros::Subscriber corner_sub_;
   ros::Publisher odom_pub_;
+  ros::Publisher gate_pub_;
+  tf::TransformBroadcaster br;
 
   std::string param_path_;
   std::string odom_topic_;
   std::string gate_topic_;
 
   Pipeline* Pipeline_;
+
+  geometry_msgs::Vector3 dimensions;
+  tf::Transform transform;
+  bool initialized_ = false;
 
 };
 } // namespace gate

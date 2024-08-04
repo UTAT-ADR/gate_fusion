@@ -26,7 +26,7 @@ public:
   Eigen::Matrix<double, 6, 1> get_state(const double& t) { return fast_propagate(t); };
 
 private:
-  void propagate(const double& t);
+  bool propagate(const double& t);
 
   void update(const std::vector<Eigen::Vector3d>& p_b_i_vecs,
               const std::vector<Eigen::Matrix3d>& p_b_i_covs);

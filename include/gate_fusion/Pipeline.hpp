@@ -8,7 +8,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include "gate_fusion/ESKF.hpp"
-#include "gate_fusion/utils/rotation.hpp"
+#include "drolib/rotation/rotation_utils.h"
 
 namespace gate {
 class Pipeline {
@@ -22,7 +22,9 @@ public:
                  const double& t);
   
   void feed_corners(const std::vector<std::vector<cv::Point2d>>& corners,
-                    const double& t);
+                    const double& t,
+                    std::vector<Eigen::Vector3d>& p_g_i_vec,
+                    std::vector<Eigen::Quaterniond>& q_i_g_vec);
 
   Eigen::Matrix<double, 6, 1> get_state(const double& t) { return ESKF_->get_state(t); };
 
@@ -33,7 +35,9 @@ private:
   bool matchGates(const std::vector<Eigen::Matrix<double, 4, 4>>& T_c_gs,
                   const Eigen::Vector3d& p_b_i,
                   std::vector<Eigen::Vector3d>& p_b_i_vec,
-                  std::vector<Eigen::Matrix3d>& R_vec);
+                  std::vector<Eigen::Matrix3d>& R_vec,
+                  std::vector<Eigen::Vector3d>& p_g_i_vec,
+                  std::vector<Eigen::Quaterniond>& q_i_g_vec);
 
   cv::Point2d findCentroid(const std::vector<cv::Point2d>& corners);
   std::vector<cv::Point2d> sort_corners(const std::vector<cv::Point2d>& corners);

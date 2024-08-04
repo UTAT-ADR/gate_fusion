@@ -9,6 +9,9 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
   flightgoggles
+  drolib
+  jsk_recognition_msgs
+  tf
 )
 
 ## System dependencies
@@ -35,7 +38,7 @@ add_compile_options(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES gate_fusion
-  CATKIN_DEPENDS roscpp nav_msgs sensor_msgs cv_bridge image_transport flightgoggles
+  CATKIN_DEPENDS roscpp nav_msgs sensor_msgs cv_bridge image_transport flightgoggles drolib jsk_recognition_msgs tf
   DEPENDS eigen libopencv-dev nvidia-cuda yaml-cpp
 )
 
@@ -66,6 +69,7 @@ add_library(${PROJECT_NAME}
   src/ESKF.cpp
   src/GateSimROS.cpp
   src/Pipeline.cpp
+  src/pencil_filter.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -79,4 +83,16 @@ target_link_libraries(gate_sim_node
   ${thirdparty_libraries}
 )
 
+add_executable(gate_map_publisher src/gate_map_publisher.cpp)
 
+target_link_libraries(gate_map_publisher
+  ${PROJECT_NAME}
+  ${thirdparty_libraries}
+)
+
+add_executable(pencil_filter_node src/pencil_filter_node.cpp)
+
+target_link_libraries(pencil_filter_node
+  ${PROJECT_NAME}
+  ${thirdparty_libraries}
+)

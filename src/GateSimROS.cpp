@@ -19,11 +19,22 @@ GateSimROS::GateSimROS(const ros::NodeHandle& nh, const ros::NodeHandle& pnh)
     ROS_ERROR("Fail to get gate topic!");
     exit(1);
   }
+  YAML::Node params = YAML::LoadFile(param_path_);
+  double gate_size = params["gate_size"].as<double>();
+
+  dimensions.x = 0.01;
+  dimensions.y = gate_size;
+  dimensions.z = gate_size;
+
+  transform.setOrigin(tf::Vector3(params["start_pos_offset"][0].as<double>(),
+                                  params["start_pos_offset"][1].as<double>(),
+                                  params["start_pos_offset"][2].as<double>()));
 
   odom_sub_ = nh_.subscribe(odom_topic_, 1, &GateSimROS::odomCallBack, this);
   corner_sub_ = nh_.subscribe(gate_topic_, 1, &GateSimROS::cornerCallBack, this);
 
-  odom_pub_ = nh_.advertise<nav_msgs::Odometry>("gate_fusion_odom", 1000);
+  odom_pub_ = nh_.advertise<nav_msgs::Odometry>("gate_fusion/odom", 1000);
+  gate_pub_ = nh_.advertise<jsk_recognition_msgs::BoundingBoxArray>("gate_fusion/gates", 1000);
 
   Pipeline_ = new Pipeline(param_path_);
 
@@ -46,13 +57,25 @@ void GateSimROS::odomCallBack(const nav_msgs::OdometryConstPtr& odom_msg) {
 
   double _t = odom_msg->header.stamp.toSec();
 
+  if (!initialized_) {
+    tf::Quaternion q(odom_msg->pose.pose.orientation.x,
+                     odom_msg->pose.pose.orientation.y,
+                     odom_msg->pose.pose.orientation.z,
+                     odom_msg->pose.pose.orientation.w);
+    transform.setRotation(q.inverse());
+    
+    initialized_ = true;
+  }
+
+  br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "global"));
+
   Pipeline_->feed_odom(_p, _v, _q, _t);
 
   Eigen::Matrix<double, 6, 1> state = Pipeline_->get_state(_t);
 
   nav_msgs::Odometry pub_odom_msg;
 
-  pub_odom_msg.header.frame_id = odom_msg->header.frame_id;
+  pub_odom_msg.header.frame_id = "world";
   pub_odom_msg.header.stamp = odom_msg->header.stamp;
   pub_odom_msg.child_frame_id = odom_msg->child_frame_id;
 
@@ -100,5 +123,28 @@ void GateSimROS::cornerCallBack(const flightgoggles::IRMarkerArrayConstPtr& corn
     }
   }
 
-  Pipeline_->feed_corners(_corners, _t);
+  std::vector<Eigen::Vector3d> p_g_i_vec;
+  std::vector<Eigen::Quaterniond> q_i_g_vec;
+
+  Pipeline_->feed_corners(_corners, _t, p_g_i_vec, q_i_g_vec);
+
+  jsk_recognition_msgs::BoundingBoxArray gate_msg;
+  gate_msg.header.stamp = corner_msg->header.stamp;
+  gate_msg.header.frame_id = "world";
+  for (int i = 0; i < static_cast<int>(p_g_i_vec.size()); i++) {
+    jsk_recognition_msgs::BoundingBox gate;
+    gate.header.stamp = corner_msg->header.stamp;
+    gate.header.frame_id = "world";
+    gate.pose.position.x = p_g_i_vec[i](0);
+    gate.pose.position.y = p_g_i_vec[i](1);
+    gate.pose.position.z = p_g_i_vec[i](2);
+    gate.pose.orientation.x = q_i_g_vec[i].x();
+    gate.pose.orientation.y = q_i_g_vec[i].y();
+    gate.pose.orientation.z = q_i_g_vec[i].z();
+    gate.pose.orientation.w = q_i_g_vec[i].w();
+    gate.label = i;
+    gate.dimensions = dimensions;
+    gate_msg.boxes.push_back(gate);
+  }
+  gate_pub_.publish(gate_msg);
 }
