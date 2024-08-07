@@ -34,6 +34,7 @@ private:
 
   bool matchGates(const std::vector<Eigen::Matrix<double, 4, 4>>& T_c_gs,
                   const Eigen::Vector3d& p_b_i,
+                  const double& t,
                   std::vector<Eigen::Vector3d>& p_b_i_vec,
                   std::vector<Eigen::Matrix3d>& R_vec,
                   std::vector<Eigen::Vector3d>& p_g_i_vec,
@@ -62,6 +63,8 @@ private:
 
   double acc_noise_density_multiplier_;
   double acc_noise_density_;
+  double gate_match_threshold_;
+  double rpj_error_threshold_;
 
 
 };

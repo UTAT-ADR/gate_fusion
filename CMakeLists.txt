@@ -31,9 +31,7 @@ set(TensorRT_LIBRARIES /usr/lib/aarch64-linux-gnu)
 add_compile_options(
   -std=c++17
   -g3
-  -Wall
-  -Wuninitialized
-  -Wmaybe-uninitialized)
+  -Wall)
 
 catkin_package(
   INCLUDE_DIRS include
@@ -66,33 +64,47 @@ list(APPEND thirdparty_libraries
 )
 
 add_library(${PROJECT_NAME}
-  src/ESKF.cpp
-  src/GateSimROS.cpp
-  src/Pipeline.cpp
-  src/pencil_filter.cpp
+  src/eskf/ESKF.cpp
+  src/gate_sim/GateSimROS.cpp
+  src/pipeline/Pipeline.cpp
+  src/pencil_filter/pencil_filter.cpp
+  src/yolo/core/core.cpp
+  src/yolo/core/tensor.cpp
+  src/yolo/core/types.cpp
+  src/yolo/utils/utils.cpp
+  src/yolo/vision/cudaWarp.cu
+  src/yolo/vision/detection.cpp
+  src/viz/yolo_viz.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
   ${thirdparty_libraries}
 )
 
-add_executable(gate_sim_node src/gate_sim_node.cpp)
+add_executable(gate_sim_node src/gate_sim/gate_sim_node.cpp)
 
 target_link_libraries(gate_sim_node
   ${PROJECT_NAME}
   ${thirdparty_libraries}
 )
 
-add_executable(gate_map_publisher src/gate_map_publisher.cpp)
+add_executable(gate_map_publisher src/viz/gate_map_publisher.cpp)
 
 target_link_libraries(gate_map_publisher
   ${PROJECT_NAME}
   ${thirdparty_libraries}
 )
 
-add_executable(pencil_filter_node src/pencil_filter_node.cpp)
+add_executable(pencil_filter_node src/pencil_filter/pencil_filter_node.cpp)
 
 target_link_libraries(pencil_filter_node
+  ${PROJECT_NAME}
+  ${thirdparty_libraries}
+)
+
+add_executable(yolo_viz_node src/viz/yolo_viz_node.cpp)
+
+target_link_libraries(yolo_viz_node
   ${PROJECT_NAME}
   ${thirdparty_libraries}
 )

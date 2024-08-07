@@ -6,6 +6,7 @@
 #include <Eigen/Geometry>
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
+#include <nav_msgs/Path.h>
 #include <jsk_recognition_msgs/BoundingBoxArray.h>
 #include <flightgoggles/IRMarkerArray.h>
 #include <tf/transform_broadcaster.h>
@@ -33,7 +34,10 @@ private:
   ros::Subscriber corner_sub_;
   ros::Publisher odom_pub_;
   ros::Publisher gate_pub_;
+  ros::Publisher path_pub_;
   tf::TransformBroadcaster br;
+
+  nav_msgs::Path path_msg_;
 
   std::string param_path_;
   std::string odom_topic_;
