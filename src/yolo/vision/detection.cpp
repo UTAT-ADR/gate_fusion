@@ -37,10 +37,10 @@ DetectionResult BaseDet::postProcess(const int idx) {
     result.num = num;
 
     for (int i = 0; i < num; ++i) {
-        float left   = boxes[i * 4];
-        float top    = boxes[i * 4 + 1];
-        float right  = boxes[i * 4 + 2];
-        float bottom = boxes[i * 4 + 3];
+        float x_center   = boxes[i * 4];
+        float y_center    = boxes[i * 4 + 1];
+        float width  = boxes[i * 4 + 2];
+        float height = boxes[i * 4 + 3];
 
         points.clear();
 
@@ -54,10 +54,10 @@ DetectionResult BaseDet::postProcess(const int idx) {
         }
 
         // Apply affine transformation
-        transforms[idx].transform(left, top, &left, &top);
-        transforms[idx].transform(right, bottom, &right, &bottom);
+        transforms[idx].transform(x_center, y_center, &x_center, &y_center);
+        transforms[idx].transform(width, height, &width, &height);
 
-        result.boxes.emplace_back(Box{left, top, right, bottom});
+        result.boxes.emplace_back(Box{x_center, y_center, width, height});
         result.scores.emplace_back(scores[i]);
         result.classes.emplace_back(classes[i]);
         result.kps.emplace_back(points);

@@ -12,6 +12,10 @@ find_package(catkin REQUIRED COMPONENTS
   drolib
   jsk_recognition_msgs
   tf
+  std_msgs
+  geometry_msgs
+  message_runtime
+  message_generation
 )
 
 ## System dependencies
@@ -33,10 +37,21 @@ add_compile_options(
   -g3
   -Wall)
 
+add_message_files(
+  DIRECTORY msg
+  FILES
+  YoloPose.msg
+  YoloPoseArray.msg
+  BoundingBox.msg
+  Keypoint.msg
+)
+
+generate_messages(DEPENDENCIES geometry_msgs std_msgs)
+
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES gate_fusion
-  CATKIN_DEPENDS roscpp nav_msgs sensor_msgs cv_bridge image_transport flightgoggles drolib jsk_recognition_msgs tf
+  CATKIN_DEPENDS roscpp nav_msgs sensor_msgs cv_bridge image_transport flightgoggles drolib jsk_recognition_msgs tf message_runtime std_msgs geometry_msgs message_generation
   DEPENDS eigen libopencv-dev nvidia-cuda yaml-cpp
 )
 
@@ -66,6 +81,7 @@ list(APPEND thirdparty_libraries
 add_library(${PROJECT_NAME}
   src/eskf/ESKF.cpp
   src/gate_sim/GateSimROS.cpp
+  src/gate_yolo/GateYoloROS.cpp
   src/pipeline/Pipeline.cpp
   src/pencil_filter/pencil_filter.cpp
   src/yolo/core/core.cpp
@@ -84,6 +100,13 @@ target_link_libraries(${PROJECT_NAME}
 add_executable(gate_sim_node src/gate_sim/gate_sim_node.cpp)
 
 target_link_libraries(gate_sim_node
+  ${PROJECT_NAME}
+  ${thirdparty_libraries}
+)
+
+add_executable(gate_yolo_node src/gate_yolo/gate_yolo_node.cpp)
+
+target_link_libraries(gate_yolo_node
   ${PROJECT_NAME}
   ${thirdparty_libraries}
 )

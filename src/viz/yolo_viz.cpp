@@ -36,18 +36,16 @@ YOLOSubscriber::YOLOSubscriber(const ros::NodeHandle& nh,
 
 void YOLOSubscriber::imageCallback(const sensor_msgs::ImageConstPtr& msg) {
   double t1 = ros::Time::now().toSec();
-  cv_bridge::CvImageConstPtr BridgePtr;
-  BridgePtr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
-  cv::Mat image;
-  cv::cvtColor(BridgePtr->image,image, cv::COLOR_GRAY2RGB);
+  cv_bridge::CvImagePtr BridgePtr;
+  BridgePtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
 
-  YOLO::Image image_in(image.data, image.cols, image.rows);
+  YOLO::Image image_in(BridgePtr->image.data, BridgePtr->image.cols, BridgePtr->image.rows);
   double t2 = ros::Time::now().toSec();
   auto result = model->predict(image_in);
   double t3 = ros::Time::now().toSec();
-  YOLOSubscriber::visualize(image, result, labels);
+  YOLOSubscriber::visualize(BridgePtr->image, result, labels);
 
-  sensor_msgs::ImagePtr yolo_msg = cv_bridge::CvImage(msg->header, "rgb8", image).toImageMsg();
+  sensor_msgs::ImagePtr yolo_msg = cv_bridge::CvImage(msg->header, "bgr8", BridgePtr->image).toImageMsg();
   yoloPub_.publish(yolo_msg);
 
   double t4 = ros::Time::now().toSec();
@@ -97,9 +95,9 @@ void YOLOSubscriber::visualize(cv::Mat& image, const YOLO::DetectionResult& resu
         // Draw rectangle and label
         int      baseLine;
         cv::Size labelSize = cv::getTextSize(labelText, cv::FONT_HERSHEY_SIMPLEX, 0.6, 1, &baseLine);
-        cv::rectangle(image, cv::Point(box.left - (box.right / 2), box.top - (box.bottom / 2)), cv::Point(box.left + (box.right / 2), box.top + (box.bottom / 2)), color, 2, cv::LINE_AA);
-        cv::rectangle(image, cv::Point(box.left - (box.right / 2), box.top - (box.bottom / 2) - labelSize.height), cv::Point(box.left - (box.right / 2) + labelSize.width, box.top - (box.bottom / 2)), color, -1);
-        cv::putText(image, labelText, cv::Point(box.left - (box.right / 2), box.top - (box.bottom / 2)), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 255), 1);
+        cv::rectangle(image, cv::Point(box.x_center - (box.width / 2), box.y_center - (box.height / 2)), cv::Point(box.x_center + (box.width / 2), box.y_center + (box.height / 2)), color, 2, cv::LINE_AA);
+        cv::rectangle(image, cv::Point(box.x_center - (box.width / 2), box.y_center - (box.height / 2) - labelSize.height), cv::Point(box.x_center - (box.width / 2) + labelSize.width, box.y_center - (box.height / 2)), color, -1);
+        cv::putText(image, labelText, cv::Point(box.x_center - (box.width / 2), box.y_center - (box.height / 2)), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 255), 1);
     
         for (auto& kp : kps) {
             cv::circle(image, cv::Point(kp.x, kp.y), 5, color, -1);

@@ -11,10 +11,10 @@ namespace YOLO {
  * @brief Represents a bounding box.
  */
 struct DEPLOY_DECL Box {
-    float left;   /**< Left coordinate of the bounding box */
-    float top;    /**< Top coordinate of the bounding box */
-    float right;  /**< Right coordinate of the bounding box */
-    float bottom; /**< Bottom coordinate of the bounding box */
+    float x_center;   /**< Left coordinate of the bounding box */
+    float y_center;    /**< Top coordinate of the bounding box */
+    float width;  /**< Right coordinate of the bounding box */
+    float height; /**< Bottom coordinate of the bounding box */
 };
 
 struct DEPLOY_DECL Point {

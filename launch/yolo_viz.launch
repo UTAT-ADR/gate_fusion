@@ -2,8 +2,8 @@
   <node name="yolo_viz_node" pkg="gate_fusion" type="yolo_viz_node" output="screen">
   <!-- <node name="yolo_viz_node" pkg="gate_fusion" type="yolo_viz_node" output="screen" launch-prefix="gdb -ex run &#45;&#45;args"> -->
     <param name="label_file_path" value="$(find gate_fusion)/config/labels.txt" />
-    <param name="img_topic" value="/adr/fisheye1/image_raw" />
-    <param name="engine_file_path" value="$(find gate_fusion)/engine/best_original.engine" />
+    <param name="img_topic" value="/uav/camera/left/image_rect_color/pencil" />
+    <param name="engine_file_path" value="$(find gate_fusion)/engine/pencil.engine" />
   </node>
 
 </launch>

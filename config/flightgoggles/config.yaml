@@ -8,6 +8,7 @@ gate_map_path: "/home/noidvan/workspaces/fg_ws/src/agihawk/racetracks/rss_5g.yam
 start_pos_offset: [-3.5, 0.0, 1.0]
 gate_match_threshold: 1
 rpj_error_threshold: 10
+time_offset: -0.00220
 
 # imu and camera spacial-temporal
 # imu config should also have the correct noise values
