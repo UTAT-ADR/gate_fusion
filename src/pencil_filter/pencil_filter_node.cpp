@@ -15,7 +15,7 @@ public:
     }
 
         image_sub_ = it_.subscribe(topic_name_, 1, &PencilFilterNode::imageCallback, this);
-        image_pub_ = it_.advertise(topic_name_ + "/pencil", 1);
+        image_pub_ = it_.advertise(topic_name_ + "_pencil", 1);
     }
 
     void imageCallback(const sensor_msgs::ImageConstPtr& msg) {

@@ -3,10 +3,10 @@
   <!-- <node name="gate_sim_node" pkg="gate_fusion" type="gate_sim_node" output="screen" launch-prefix="gdb -ex run &#45;&#45;args"> -->
     <param name="param_path" value="$(find gate_fusion)/config/flightgoggles_yolo/config.yaml" />
     <param name="odom_topic" value="/ov_msckf/odomimu" />
-    <param name="image_topic" value="/uav/camera/left/image_rect_color/pencil" />
+    <param name="image_topic" value="/orin16/mjpeg_cam/image_pencil" />
   </node>
 
-  <param name="gate_map_path" value="$(find agihawk)/racetracks/rss_5g.yaml" />
+  <param name="gate_map_path" value="$(find agihawk)/racetracks/dome_circle.yaml" />
   <node name="gate_map_node" pkg="gate_fusion" type="gate_map_publisher" output="screen">
   <!-- <node name="gate_map_node" pkg="gate_fusion" type="gate_map_publisher" output="screen" launch-prefix="gdb -ex run &#45;&#45;args"> -->
   </node>

@@ -6,13 +6,14 @@ imu0:
     - [0.0, 1.0, 0.0, 0.0]
     - [0.0, 0.0, 1.0, 0.0]
     - [0.0, 0.0, 0.0, 1.0]
-  accelerometer_noise_density: 5.0000e-3  # [ m / s^2 / sqrt(Hz) ]   ( accel "white noise" )
-  accelerometer_random_walk: 2.361e-05    # [ m / s^3 / sqrt(Hz) ].  ( accel bias diffusion )
-  gyroscope_noise_density: 3.8730e-3     # [ rad / s / sqrt(Hz) ]   ( gyro "white noise" )
-  gyroscope_random_walk: 2.361e-05       # [ rad / s^2 / sqrt(Hz) ] ( gyro bias diffusion )
-  rostopic: /uav/sensors/imu
+  accelerometer_noise_density: 0.022417238265501453
+  accelerometer_random_walk: 0.002724420649228521
+  gyroscope_noise_density: 0.0017395697153084138
+  gyroscope_random_walk: 2.95316233104999e-04
+  model: calibrated
+  rostopic: /orin16/bf/imu
   time_offset: 0.0
-  update_rate: 200.0
+  update_rate: 400.0
   # three different modes supported:
   # "calibrated" (same as "kalibr"), "kalibr", "rpng"
   model: "kalibr"

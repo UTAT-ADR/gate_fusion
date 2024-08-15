@@ -27,7 +27,7 @@ YOLOSubscriber::YOLOSubscriber(const ros::NodeHandle& nh,
 
   imageSub_ = it.subscribe(img_topic, 1, &YOLOSubscriber::imageCallback, this);
 
-  yoloPub_ = it.advertise("yolo_viz", 1000);
+  yoloPub_ = it.advertise(img_topic + "_yolo_viz", 1000);
 
   model = new YOLO::DeployDet(engine_file_path);
   labels = YOLOSubscriber::generateLabelColorPairs(label_file_path);
@@ -35,27 +35,27 @@ YOLOSubscriber::YOLOSubscriber(const ros::NodeHandle& nh,
 }
 
 void YOLOSubscriber::imageCallback(const sensor_msgs::ImageConstPtr& msg) {
-  double t1 = ros::Time::now().toSec();
+  // double t1 = ros::Time::now().toSec();
   cv_bridge::CvImagePtr BridgePtr;
   BridgePtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
 
   YOLO::Image image_in(BridgePtr->image.data, BridgePtr->image.cols, BridgePtr->image.rows);
-  double t2 = ros::Time::now().toSec();
+  // double t2 = ros::Time::now().toSec();
   auto result = model->predict(image_in);
-  double t3 = ros::Time::now().toSec();
+  // double t3 = ros::Time::now().toSec();
   YOLOSubscriber::visualize(BridgePtr->image, result, labels);
 
   sensor_msgs::ImagePtr yolo_msg = cv_bridge::CvImage(msg->header, "bgr8", BridgePtr->image).toImageMsg();
   yoloPub_.publish(yolo_msg);
 
-  double t4 = ros::Time::now().toSec();
+  // double t4 = ros::Time::now().toSec();
 
-  double t_total = (t4 - t1) * 1000;
-  double t_pre = (t2 - t1) * 1000;
-  double t_infer = (t3 - t2) * 1000;
-  double t_post = (t4 - t3) * 1000;
+  // double t_total = (t4 - t1) * 1000;
+  // double t_pre = (t2 - t1) * 1000;
+  // double t_infer = (t3 - t2) * 1000;
+  // double t_post = (t4 - t3) * 1000;
 
-  ROS_INFO("Total: %.2f ms; Preprocess: %.2f ms; Inference: %.2f ms; Visualize: %.2f ms", t_total, t_pre, t_infer, t_post);
+  // ROS_INFO("Total: %.2f ms; Preprocess: %.2f ms; Inference: %.2f ms; Visualize: %.2f ms", t_total, t_pre, t_infer, t_post);
 
 }
 
@@ -76,7 +76,7 @@ std::vector<std::pair<std::string, cv::Scalar>> YOLOSubscriber::generateLabelCol
 
     std::string label;
     while (std::getline(file, label)) {
-        labelColorPairs.emplace_back(label, generateRandomColor());
+        labelColorPairs.emplace_back(label, cv::Scalar(255, 0, 255));
     }
     return labelColorPairs;
 }
@@ -96,8 +96,8 @@ void YOLOSubscriber::visualize(cv::Mat& image, const YOLO::DetectionResult& resu
         int      baseLine;
         cv::Size labelSize = cv::getTextSize(labelText, cv::FONT_HERSHEY_SIMPLEX, 0.6, 1, &baseLine);
         cv::rectangle(image, cv::Point(box.x_center - (box.width / 2), box.y_center - (box.height / 2)), cv::Point(box.x_center + (box.width / 2), box.y_center + (box.height / 2)), color, 2, cv::LINE_AA);
-        cv::rectangle(image, cv::Point(box.x_center - (box.width / 2), box.y_center - (box.height / 2) - labelSize.height), cv::Point(box.x_center - (box.width / 2) + labelSize.width, box.y_center - (box.height / 2)), color, -1);
-        cv::putText(image, labelText, cv::Point(box.x_center - (box.width / 2), box.y_center - (box.height / 2)), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 255), 1);
+        // cv::rectangle(image, cv::Point(box.x_center - (box.width / 2), box.y_center - (box.height / 2) - labelSize.height), cv::Point(box.x_center - (box.width / 2) + labelSize.width, box.y_center - (box.height / 2)), color, -1);
+        // cv::putText(image, labelText, cv::Point(box.x_center - (box.width / 2), box.y_center - (box.height / 2)), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 255), 1);
     
         for (auto& kp : kps) {
             cv::circle(image, cv::Point(kp.x, kp.y), 5, color, -1);
