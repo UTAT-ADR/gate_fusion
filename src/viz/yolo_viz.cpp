@@ -83,6 +83,14 @@ std::vector<std::pair<std::string, cv::Scalar>> YOLOSubscriber::generateLabelCol
 
 // Visualize detection results
 void YOLOSubscriber::visualize(cv::Mat& image, const YOLO::DetectionResult& result, const std::vector<std::pair<std::string, cv::Scalar>>& labelColorPairs) {
+    // Define colors for the four corners and edges
+    std::vector<cv::Scalar> cornerColors = {
+        cv::Scalar(255, 0, 0),    // Blue
+        cv::Scalar(0, 255, 0),    // Green
+        cv::Scalar(0, 0, 255),    // Red
+        cv::Scalar(255, 255, 0)   // Cyan
+    };
+
     for (size_t i = 0; i < result.num; ++i) {
         const auto& box       = result.boxes[i];
         int         cls       = result.classes[i];
@@ -92,15 +100,25 @@ void YOLOSubscriber::visualize(cv::Mat& image, const YOLO::DetectionResult& resu
         const auto& color     = labelColorPairs[cls].second;
         std::string labelText = label + " " + cv::format("%.2f", score);
 
-        // Draw rectangle and label
+        // Draw rectangle and label (optional, currently commented out)
         int      baseLine;
         cv::Size labelSize = cv::getTextSize(labelText, cv::FONT_HERSHEY_SIMPLEX, 0.6, 1, &baseLine);
-        cv::rectangle(image, cv::Point(box.x_center - (box.width / 2), box.y_center - (box.height / 2)), cv::Point(box.x_center + (box.width / 2), box.y_center + (box.height / 2)), color, 2, cv::LINE_AA);
+        // cv::rectangle(image, cv::Point(box.x_center - (box.width / 2), box.y_center - (box.height / 2)), cv::Point(box.x_center + (box.width / 2), box.y_center + (box.height / 2)), color, 2, cv::LINE_AA);
         // cv::rectangle(image, cv::Point(box.x_center - (box.width / 2), box.y_center - (box.height / 2) - labelSize.height), cv::Point(box.x_center - (box.width / 2) + labelSize.width, box.y_center - (box.height / 2)), color, -1);
         // cv::putText(image, labelText, cv::Point(box.x_center - (box.width / 2), box.y_center - (box.height / 2)), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 255), 1);
-    
-        for (auto& kp : kps) {
-            cv::circle(image, cv::Point(kp.x, kp.y), 5, color, -1);
+
+        // Draw keypoints and connecting lines with different colors
+        if (kps.size() == 4) {  // Ensure there are at least 4 keypoints
+            // Draw keypoints with different colors
+            for (size_t j = 0; j < 4; ++j) {
+                cv::circle(image, cv::Point(kps[j].x, kps[j].y), 10, cornerColors[j], -1);
+            }
+
+            // Draw lines connecting keypoints with different colors
+            for (size_t j = 0; j < 4; ++j) {
+                cv::line(image, cv::Point(kps[j].x, kps[j].y), cv::Point(kps[(j+1) % 4].x, kps[(j+1) % 4].y), cornerColors[j], 5, cv::LINE_AA);
+            }
         }
     }
 }
+

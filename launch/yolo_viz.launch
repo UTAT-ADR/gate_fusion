@@ -3,7 +3,7 @@
   <!-- <node name="yolo_viz_node" pkg="gate_fusion" type="yolo_viz_node" output="screen" launch-prefix="gdb -ex run &#45;&#45;args"> -->
     <param name="label_file_path" value="$(find gate_fusion)/config/labels.txt" />
     <param name="img_topic" value="/orin16/mjpeg_cam/image" />
-    <param name="engine_file_path" value="$(find gate_fusion)/engine/color.engine" />
+    <param name="engine_file_path" value="$(find gate_fusion)/engine/last_color_dome.engine" />
   </node>
 
 </launch>
