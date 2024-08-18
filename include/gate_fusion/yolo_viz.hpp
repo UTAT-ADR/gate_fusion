@@ -2,6 +2,7 @@
 #define YOLO_VIZ_HPP
 
 #include <random>
+#include <fstream>
 
 #include <ros/ros.h>
 #include <opencv2/opencv.hpp>

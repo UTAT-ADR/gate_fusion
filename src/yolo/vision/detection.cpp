@@ -27,11 +27,11 @@ BaseDet::BaseDet(const std::string& file, bool cudaMem, int device) : cudaMem(cu
 
 // Post-process inference results.
 DetectionResult BaseDet::postProcess(const int idx) {
-    int    num     = static_cast<int*>(tensorInfos[1].tensor.host())[idx];
-    float* boxes   = static_cast<float*>(tensorInfos[2].tensor.host()) + idx * tensorInfos[2].dims.d[1] * tensorInfos[2].dims.d[2];
+    int    num     = static_cast<int*>(tensorInfos[5].tensor.host())[idx];
+    float* boxes   = static_cast<float*>(tensorInfos[1].tensor.host()) + idx * tensorInfos[2].dims.d[1] * tensorInfos[2].dims.d[2];
     float* scores  = static_cast<float*>(tensorInfos[3].tensor.host()) + idx * tensorInfos[3].dims.d[1];
-    int*   classes = static_cast<int*>(tensorInfos[4].tensor.host()) + idx * tensorInfos[4].dims.d[1];
-    float* kps     = static_cast<float*>(tensorInfos[5].tensor.host()) + idx * tensorInfos[5].dims.d[1] * tensorInfos[5].dims.d[2];
+    int*   classes = static_cast<int*>(tensorInfos[2].tensor.host()) + idx * tensorInfos[4].dims.d[1];
+    float* kps     = static_cast<float*>(tensorInfos[4].tensor.host()) + idx * tensorInfos[5].dims.d[1] * tensorInfos[5].dims.d[2];
 
     DetectionResult result;
     result.num = num;
@@ -135,6 +135,8 @@ void DeployDet::setupTensors() {
         if (dims.d[1] == -1) {
             dims.d[1] = 10;
         }
+
+        std::cout << name << " " << dims.d[1] << " " << dims.d[2] << " " << dims.d[3] << std::endl;
 
         if (input) {
             dynamic = std::any_of(dims.d, dims.d + dims.nbDims, [](int val) { return val == -1; });

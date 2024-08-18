@@ -35,27 +35,27 @@ YOLOSubscriber::YOLOSubscriber(const ros::NodeHandle& nh,
 }
 
 void YOLOSubscriber::imageCallback(const sensor_msgs::ImageConstPtr& msg) {
-  // double t1 = ros::Time::now().toSec();
+  double t1 = ros::Time::now().toSec();
   cv_bridge::CvImagePtr BridgePtr;
   BridgePtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
 
   YOLO::Image image_in(BridgePtr->image.data, BridgePtr->image.cols, BridgePtr->image.rows);
-  // double t2 = ros::Time::now().toSec();
+  double t2 = ros::Time::now().toSec();
   auto result = model->predict(image_in);
-  // double t3 = ros::Time::now().toSec();
+  double t3 = ros::Time::now().toSec();
   YOLOSubscriber::visualize(BridgePtr->image, result, labels);
 
   sensor_msgs::ImagePtr yolo_msg = cv_bridge::CvImage(msg->header, "bgr8", BridgePtr->image).toImageMsg();
   yoloPub_.publish(yolo_msg);
 
-  // double t4 = ros::Time::now().toSec();
+  double t4 = ros::Time::now().toSec();
 
-  // double t_total = (t4 - t1) * 1000;
-  // double t_pre = (t2 - t1) * 1000;
-  // double t_infer = (t3 - t2) * 1000;
-  // double t_post = (t4 - t3) * 1000;
+  double t_total = (t4 - t1) * 1000;
+  double t_pre = (t2 - t1) * 1000;
+  double t_infer = (t3 - t2) * 1000;
+  double t_post = (t4 - t3) * 1000;
 
-  // ROS_INFO("Total: %.2f ms; Preprocess: %.2f ms; Inference: %.2f ms; Visualize: %.2f ms", t_total, t_pre, t_infer, t_post);
+  ROS_INFO("Total: %.2f ms; Preprocess: %.2f ms; Inference: %.2f ms; Visualize: %.2f ms", t_total, t_pre, t_infer, t_post);
 
 }
 
