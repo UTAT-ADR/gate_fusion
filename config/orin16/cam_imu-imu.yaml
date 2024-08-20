@@ -1,0 +1,16 @@
+%YAML:1.0
+
+imu0:
+  T_i_b:
+    - [1.0, 0.0, 0.0, 0.0]
+    - [0.0, 1.0, 0.0, 0.0]
+    - [0.0, 0.0, 1.0, 0.0]
+    - [0.0, 0.0, 0.0, 1.0]
+  accelerometer_noise_density: 0.022417238265501453
+  accelerometer_random_walk: 0.002724420649228521
+  gyroscope_noise_density: 0.0017395697153084138
+  gyroscope_random_walk: 2.95316233104999e-04
+  model: calibrated
+  rostopic: /orin16/bf/imu
+  time_offset: 0.0
+  update_rate: 400.0
