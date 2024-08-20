@@ -26,7 +26,7 @@ public:
                     std::vector<Eigen::Vector3d>& p_g_i_vec,
                     std::vector<Eigen::Quaterniond>& q_i_g_vec);
 
-  Eigen::Matrix<double, 6, 1> get_state(const double& t) { return ESKF_->get_state(t); };
+  Eigen::Matrix<double, 10, 1> get_state(const double t);
 
 private:
   bool solveIPPE(const std::vector<std::vector<cv::Point2d>>& gates,

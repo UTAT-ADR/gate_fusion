@@ -297,3 +297,14 @@ void Pipeline::load_gatemap(const std::string& filepath) {
   }
     std::cout <<"Loaded " << gate_map_.size() << " gates." << std::endl;
 }
+
+Eigen::Matrix<double, 10, 1> Pipeline::get_state(const double t) {
+  Eigen::Matrix<double, 10, 1> cur_state;
+  cur_state.block<6, 1>(0, 0) = ESKF_->get_state(t);
+  Eigen::Quaterniond q_res(R_i_b_);
+  cur_state(6) = q_res.x();
+  cur_state(7) = q_res.y();
+  cur_state(8) = q_res.z();
+  cur_state(9) = q_res.w();
+  return cur_state;
+}

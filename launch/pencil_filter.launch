@@ -1,6 +1,6 @@
 <launch>
 
-<param name="image_topic_name" value="/uav/camera/left/image_rect_color" />
+<param name="image_topic_name" value="mjpeg_cam/image" />
 <node name="pencil_filter_node" pkg="gate_fusion" type="pencil_filter_node" output="screen">
 <!-- <node name="gate_map_node" pkg="gate_fusion" type="gate_map_publisher" output="screen" launch-prefix="gdb -ex run &#45;&#45;args"> -->
 </node>

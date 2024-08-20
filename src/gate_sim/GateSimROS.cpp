@@ -74,7 +74,7 @@ void GateSimROS::odomCallBack(const nav_msgs::OdometryConstPtr& odom_msg) {
 
   Pipeline_->feed_odom(_p, _v, _q, _t);
 
-  Eigen::Matrix<double, 6, 1> state = Pipeline_->get_state(_t);
+  Eigen::Matrix<double, 10, 1> state = Pipeline_->get_state(_t);
 
   nav_msgs::Odometry pub_odom_msg;
 
@@ -90,7 +90,10 @@ void GateSimROS::odomCallBack(const nav_msgs::OdometryConstPtr& odom_msg) {
   pub_odom_msg.twist.twist.linear.y = state(4);
   pub_odom_msg.twist.twist.linear.z = state(5);
 
-  pub_odom_msg.pose.pose.orientation = odom_msg->pose.pose.orientation;
+  pub_odom_msg.pose.pose.orientation.x = state(6);
+  pub_odom_msg.pose.pose.orientation.y = state(7);
+  pub_odom_msg.pose.pose.orientation.z = state(8);
+  pub_odom_msg.pose.pose.orientation.w = state(9);
 
   pub_odom_msg.twist.twist.angular = odom_msg->twist.twist.angular;
 

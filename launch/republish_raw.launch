@@ -1,3 +1,3 @@
 <launch>
-  <node name="republish_raw" pkg="image_transport" type="republish" output="screen" args="compressed in:=/orin16/mjpeg_cam/image raw out:=/orin16/mjpeg_cam/image"/>
+  <node name="republish_raw" pkg="image_transport" type="republish" output="screen" args="compressed in:=mjpeg_cam/image raw out:=mjpeg_cam/image"/>
 </launch>
