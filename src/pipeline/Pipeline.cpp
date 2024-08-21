@@ -112,6 +112,7 @@ void Pipeline::feed_corners(const std::vector<std::vector<cv::Point2d>>& corners
   if (!initialized_) {
     return;
   }
+  double t_imu = t + timeshift_cam_imu_;
 
   std::vector<Eigen::Matrix<double, 4, 4>> T_c_gs;
   if (!Pipeline::solveIPPE(corners, T_c_gs)) {
