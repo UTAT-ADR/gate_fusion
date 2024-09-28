@@ -65,6 +65,7 @@ private:
   double acc_noise_density_;
   double gate_match_threshold_;
   double rpj_error_threshold_;
+  double timeshift_cam_imu_;
 
 
 };

@@ -1,10 +1,15 @@
 <launch>
 
-<include file="$(find gate_fusion)/launch/republish_raw.launch"/>
+  <group ns="orin16">
+    <include file="$(find gate_fusion)/launch/republish_raw.launch"/>
+    <!-- <include file="$(find gate_fusion)/launch/yolo_viz.launch"/> -->
+    <include file="$(find gate_fusion)/launch/gate_yolo.launch"/>
+    <include file="$(find gate_fusion)/launch/pencil_filter.launch"/>
+    <include file="$(find ov_msckf)/launch/subscribe.launch"/>
+  </group>
 
-<include file="$(find gate_fusion)/launch/yolo_viz.launch"/>
 
-<!-- <include file="$(find ov_msckf)/launch/subscribe.launch"/> -->
+
 
 
 </launch>

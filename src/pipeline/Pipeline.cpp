@@ -21,6 +21,8 @@ Pipeline::Pipeline(const std::string& param_file_path) {
     D(0, i) = cam_params["cam0"]["distortion_coeffs"][i].as<double>();
   }
 
+  timeshift_cam_imu_ = cam_params["cam0"]["timeshift_cam_imu"].as<double>();
+
   cv::eigen2cv(D, D_);
 
   Eigen::Matrix<double, 1, 4> K_vec;
@@ -74,6 +76,7 @@ Pipeline::Pipeline(const std::string& param_file_path) {
   std::cout << "K:\n" << K_ << std::endl;
   std::cout << "T_b_c:\n" << T_b_c_ << std::endl;
   std::cout << "start_pos_offset:\n" << start_pos_offset_ << std::endl;
+  std::cout << "timeshift_cam_imu:\n" << timeshift_cam_imu_ << std::endl;
 }
 
 void Pipeline::feed_odom(const Eigen::Vector3d& p_b_i,
@@ -109,6 +112,7 @@ void Pipeline::feed_corners(const std::vector<std::vector<cv::Point2d>>& corners
   if (!initialized_) {
     return;
   }
+  double t_imu = t + timeshift_cam_imu_;
 
   std::vector<Eigen::Matrix<double, 4, 4>> T_c_gs;
   if (!Pipeline::solveIPPE(corners, T_c_gs)) {
@@ -119,11 +123,11 @@ void Pipeline::feed_corners(const std::vector<std::vector<cv::Point2d>>& corners
 
   std::vector<Eigen::Vector3d> p_b_i_vec;
   std::vector<Eigen::Matrix3d> R_vec;
-  if (!Pipeline::matchGates(T_c_gs, p_b_i, t, p_b_i_vec, R_vec, p_g_i_vec, q_i_g_vec)) {
+  if (!Pipeline::matchGates(T_c_gs, p_b_i, t_imu, p_b_i_vec, R_vec, p_g_i_vec, q_i_g_vec)) {
     return;
   }
 
-  ESKF_->feed_measurement(p_b_i_vec, R_vec, t);
+  ESKF_->feed_measurement(p_b_i_vec, R_vec, t_imu);
 }
 
 bool Pipeline::solveIPPE(const std::vector<std::vector<cv::Point2d>>& gates,
@@ -147,6 +151,9 @@ bool Pipeline::solveIPPE(const std::vector<std::vector<cv::Point2d>>& gates,
                           cv::noArray(),
                           cv::noArray(),
                           rpj_err);
+
+      // std::cout << "rpj_err:\n" << sqrt(rpj_err.at<double>(0) * rpj_err.at<double>(0) +
+      //                 rpj_err.at<double>(1) * rpj_err.at<double>(1)) << std::endl;
 
       if (t_g_c_vec.empty()) {
         continue;
